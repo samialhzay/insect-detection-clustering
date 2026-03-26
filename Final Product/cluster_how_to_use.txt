@@ -1,0 +1,139 @@
+CLUSTER HOW TO USE — cluster_crops.py
+
+What this script does
+- Loads crop images from --image_dir
+- Extracts DINOv2 embeddings (timm) and optionally caches them
+- Runs PCA + KMeans clustering
+- Picks 1 anchor image per cluster (most representative)
+- Saves cluster folders, a manifest CSV, and an anchors CSV
+- Optionally exports an interactive UMAP HTML dashboard
+
+------------------------------------------------------------
+1) Recommended folder structure
+
+project_root/
+  scripts/
+    cluster_crops.py
+  crops/
+    kept/
+      001_01_...png
+      ...
+  clusters_output/    (will be created)
+
+The script does NOT require any specific naming scheme for images.
+It processes common image formats: .jpg .jpeg .png .webp .bmp .tif .tiff
+
+------------------------------------------------------------
+2) Setup (virtual environment)
+
+macOS / Linux:
+  python3 -m venv .venv
+  source .venv/bin/activate
+
+Windows (PowerShell):
+  py -m venv .venv
+  .venv\Scripts\Activate.ps1
+
+Install deps:
+  pip install -r cluster_requirements.txt
+
+------------------------------------------------------------
+3) Basic run
+
+Example (from script folder):
+  python cluster_crops.py --image_dir ../crops/kept --out_dir ../clusters_output --k 20
+
+Outputs:
+  clusters_output/
+    clusters/
+      cluster_000/   (images copied/symlinked here)
+      cluster_001/
+      ...
+    cluster_manifest.csv
+    anchors.csv
+
+------------------------------------------------------------
+4) Auto-pick K (silhouette scan)
+
+If you omit --k, the script will choose k based on silhouette:
+  python cluster_crops.py --image_dir ../crops/kept --out_dir ../clusters_output --k_min 5 --k_max 40
+
+This also saves:
+  clusters_output/silhouette_scores.json
+
+Tip: if it’s slow, use sampling:
+  python cluster_crops.py --image_dir ../crops/kept --out_dir ../clusters_output --k_min 5 --k_max 40 --sil_sample 5000
+
+------------------------------------------------------------
+5) Embedding cache (highly recommended)
+
+Embedding extraction is the slow part. Use a cache prefix so repeated runs are fast:
+
+  python scripts/cluster_crops.py \
+    --image_dir crops/kept \
+    --out_dir clusters_output \
+    --emb_cache_prefix clusters_output/embeddings_dinov2 \
+    --k 20
+
+This writes:
+  clusters_output/embeddings_dinov2.npy
+  clusters_output/embeddings_dinov2.paths.json
+
+It will reload automatically if the image list is unchanged.
+To force recompute:
+  --force_recompute
+
+------------------------------------------------------------
+6) Optional: Export interactive HTML
+
+Install extras:
+  pip install umap-learn plotly
+
+Run:
+  python cluster_crops.py --image_dir ../crops/kept --out_dir ../clusters_output --k 20 --export_html --umap_dim 3
+
+This creates:
+  clusters_output/umap_dashboard.html
+
+Tip: if you have many images, limit points:
+  --html_max_points 15000
+
+------------------------------------------------------------
+7) Copy vs symlink (cluster folder output)
+
+Default is copying images into cluster folders.
+To save disk space, symlink (works best on macOS/Linux):
+
+  --copy_mode symlink
+
+------------------------------------------------------------
+8) Common parameter tweaks
+
+- Use a smaller model (faster) or larger model (potentially better):
+  --model vit_small_patch14_dinov2
+  --model vit_base_patch14_dinov2
+  --model vit_large_patch14_dinov2
+
+- Reduce speed / memory load:
+  --batch_size 32
+
+- Limit images for a quick test:
+  --max_images 200
+
+- Limit saved images per cluster:
+  --top_n_per_cluster 200
+
+------------------------------------------------------------
+Troubleshooting
+
+- “No module named timm” / “torch” / etc:
+  Re-run: pip install -r cluster_requirements.txt
+
+- Very slow on CPU:
+  Install a GPU-enabled torch build (platform-specific) or use a smaller model:
+    --model vit_small_patch14_dinov2
+
+- Runs but clusters are poor:
+  Try adjusting:
+    --final_pca 64 or 256
+    --k (or widen k_min/k_max)

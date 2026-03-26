@@ -1,0 +1,16 @@
+# Core requirements (needed to run clustering)
+numpy
+pandas
+torch
+torchvision
+timm
+scikit-learn
+pillow
+tqdm
+
+# Optional (only needed if you use --export_html)
+# umap-learn
+# plotly
+
+# Optional (only needed if you want .parquet output)
+# pyarrow

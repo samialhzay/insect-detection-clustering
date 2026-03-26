@@ -1,0 +1,50 @@
+HOW TO RUN — detecting_and_cropping.py
+
+Prerequisites
+- Python 3.9+ recommended
+- Your project structure should look like this (relative to the script file):
+
+  project_root/
+    scripts/
+      detecting_and_cropping.py
+    data/
+      image1.jpg
+      image2.jpg
+      ...
+    crops/                 (will be created automatically)
+      kept/
+      visualizations/
+
+Notes
+- The script expects the images to be in ../data (relative to the script location).
+- Output will be written to ../crops (relative to the script location).
+- Only .jpg images are processed (you can change the glob if needed).
+
+1) Create and activate a virtual environment
+
+macOS / Linux:
+  python3 -m venv .venv
+  source .venv/bin/activate
+
+Windows (PowerShell):
+  py -m venv .venv
+  .venv\Scripts\Activate.ps1
+
+2) Install dependencies
+  pip install -r detect_requirements.txt
+
+3) Run the script
+
+— run from the script folder:
+  cd scripts
+  python detecting_and_cropping.py
+
+
+4) Results
+- Crops: ../crops/kept/
+- Visualizations: ../crops/visualizations/
+- CSV log: ../crops/crop_log.csv
+
+Troubleshooting
+- If you get “No module named cv2”: re-run `pip install -r requirements.txt`
+- If it processes 0 images: ensure your images are .jpg and are placed in the data/ folder
